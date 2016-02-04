@@ -24,6 +24,7 @@ import random
 import time
 import weakref
 
+import kazoo.exceptions
 from kazoo.client import KazooClient
 
 from .broker import Broker
@@ -302,8 +303,11 @@ class Cluster(object):
                 broker_ids = zookeeper.get_children(brokers_path)
                 broker_connects = []
                 for broker_id in broker_ids:
-                    broker_json, _ = zookeeper.get("{}{}".format(brokers_path,
-                                                                 broker_id))
+                    try:
+                        broker_json, _ = zookeeper.get("{}{}".format(brokers_path,
+                                                                     broker_id))
+                    except kazoo.exceptions.NoNodeError:
+                        continue
                     broker_info = json.loads(broker_json.decode("utf-8"))
                     broker_connects.append((broker_info['host'],
                                             broker_info['port']))
